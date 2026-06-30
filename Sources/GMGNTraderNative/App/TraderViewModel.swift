@@ -169,30 +169,41 @@ final class TraderViewModel: ObservableObject {
             statusText = "扫描完成：\(result.decisions.count) 条决策"
             errorMessage = nil
             notifyStrongCandidates(in: result.decisions)
-
-            for decision in result.decisions.prefix(100) {
-                appendLog(TradeLogEntry(
-                    action: decision.action == "ACTION" ? "SCREEN" : "FILTER",
-                    symbol: decision.features.symbolSafe,
-                    address: decision.features.address,
-                    reason: decision.reason,
-                    chain: settings.chain,
-                    sizeSol: decision.sizeSol,
-                    pnl: nil
-                ))
-            }
+            persistLogs(for: result.decisions)
         } catch {
             errorMessage = error.localizedDescription
             statusText = "扫描失败"
         }
     }
 
-    private func appendLog(_ entry: TradeLogEntry) {
-        do {
-            try storage.appendLog(entry)
-            logs = storage.recentLogs()
-        } catch {
-            errorMessage = error.localizedDescription
+    private func persistLogs(for decisions: [TradeDecision]) {
+        let entries = decisions.prefix(100).map { decision in
+            TradeLogEntry(
+                action: decision.action == "ACTION" ? "SCREEN" : "FILTER",
+                symbol: decision.features.symbolSafe,
+                address: decision.features.address,
+                reason: decision.reason,
+                chain: settings.chain,
+                sizeSol: decision.sizeSol,
+                pnl: nil
+            )
+        }
+
+        Task.detached(priority: .utility) {
+            let storage = AppStorage()
+            do {
+                for entry in entries {
+                    try storage.appendLog(entry)
+                }
+                let recent = storage.recentLogs()
+                await MainActor.run {
+                    self.logs = recent
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
         }
     }
 

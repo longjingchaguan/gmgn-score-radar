@@ -58,7 +58,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         else {
             return
         }
-        _ = await MainActor.run {
+        Task { @MainActor in
             NSWorkspace.shared.open(url)
         }
     }
