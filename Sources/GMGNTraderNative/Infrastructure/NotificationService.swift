@@ -1,12 +1,14 @@
 import Foundation
 import AppKit
 import UserNotifications
+import os
 
 @MainActor
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationService()
 
     private var notified = Set<String>()
+    private let logger = Logger(subsystem: "ai.gmgn.trader.native", category: "notification")
 
     private override init() {
         super.init()
@@ -58,8 +60,10 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         else {
             return
         }
-        Task { @MainActor in
+        let started = Date()
+        _ = await MainActor.run {
             NSWorkspace.shared.open(url)
         }
+        logger.info("notification_open_dispatched elapsed_ms=\(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) url=\(url.absoluteString, privacy: .public)")
     }
 }
