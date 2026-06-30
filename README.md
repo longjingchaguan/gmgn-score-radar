@@ -16,7 +16,7 @@ It does not trade, sign transactions, manage wallets, or place orders.
 
 ## Install
 
-Download the latest `.dmg` from GitHub Releases.
+Download the latest `.dmg` from [GitHub Releases](https://github.com/longjingchaguan/gmgn-score-radar/releases/latest).
 
 Open the DMG and drag `GMGN 选币评分.app` into `Applications`.
 
